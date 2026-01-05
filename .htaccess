@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews
+    </IfModule>
+
+    RewriteEngine On
+
+    # Security: Block access to sensitive files
+    RewriteRule ^\.env - [F,L]
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^composer\.(json|lock) - [F,L]
+    RewriteRule ^package(-lock)?\.json - [F,L]
+
+    # Redirect all requests to public folder
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

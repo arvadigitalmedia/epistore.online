@@ -1,0 +1,42 @@
+name: Deploy to Production (cPanel)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.SSH_PORT || 22 }}
+        script: |
+          # Definisikan Path PHP spesifik cPanel
+          PHP_BIN="/usr/local/bin/php"
+          
+          # Masuk ke folder project production
+          cd ~/repositories/epi-oss-prod
+          
+          # Tarik kode terbaru
+          git pull origin main
+          
+          # Install dependensi
+          $PHP_BIN /usr/local/bin/composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+          
+          # Migrasi Database
+          $PHP_BIN artisan migrate --force
+          
+          # Optimasi
+          $PHP_BIN artisan optimize:clear
+          $PHP_BIN artisan config:cache
+          $PHP_BIN artisan route:cache
+          $PHP_BIN artisan view:cache
